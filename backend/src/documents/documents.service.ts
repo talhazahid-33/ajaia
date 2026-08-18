@@ -228,6 +228,11 @@ export class DocumentsService {
     return { success: true };
   }
 
+  async remove(access: RequestDocumentAccess) {
+    await this.prisma.document.delete({ where: { id: access.document.id } });
+    return { success: true };
+  }
+
   private async findShare(documentId: string, shareId: string) {
     const share = await this.prisma.documentShare.findFirst({
       where: { id: shareId, documentId },

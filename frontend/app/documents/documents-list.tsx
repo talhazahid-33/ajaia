@@ -8,6 +8,7 @@ import { clearUser, useCurrentUser } from '@/lib/auth';
 import {
   assertImportableFile,
   createDocument,
+  deleteDocument,
   importDocument,
   listDocuments,
   updateDocument,
@@ -67,6 +68,16 @@ export function DocumentsList() {
       setOwned(apply);
     } else {
       setShared(apply);
+    }
+  }
+
+  async function onDelete(id: string) {
+    setError(null);
+    try {
+      await deleteDocument(id);
+      setOwned((items) => items.filter((item) => item.id !== id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete document');
     }
   }
 
@@ -140,6 +151,7 @@ export function DocumentsList() {
             empty="You have not created any documents yet."
             documents={owned}
             onRename={onRename}
+            onDelete={onDelete}
           />
           <DocumentSection
             title="Shared with you"
@@ -159,6 +171,7 @@ function DocumentSection({
   empty,
   documents,
   onRename,
+  onDelete,
   showOwner = false,
 }: {
   title: string;
@@ -169,6 +182,7 @@ function DocumentSection({
     title: string,
     access: DocumentListItem['access'],
   ) => Promise<void>;
+  onDelete?: (id: string) => Promise<void>;
   showOwner?: boolean;
 }) {
   return (
@@ -186,6 +200,7 @@ function DocumentSection({
               document={document}
               showOwner={showOwner}
               onRename={onRename}
+              onDelete={onDelete}
             />
           ))}
         </ul>
@@ -198,6 +213,7 @@ function DocumentRow({
   document,
   showOwner,
   onRename,
+  onDelete,
 }: {
   document: DocumentListItem;
   showOwner: boolean;
@@ -206,10 +222,13 @@ function DocumentRow({
     title: string,
     access: DocumentListItem['access'],
   ) => Promise<void>;
+  onDelete?: (id: string) => Promise<void>;
 }) {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(document.title);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const canManage = document.access === 'owner';
 
   async function submitRename(event?: FormEvent) {
     event?.preventDefault();
@@ -222,6 +241,21 @@ function DocumentRow({
       setEditing(false);
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function submitDelete() {
+    if (!onDelete || deleting) {
+      return;
+    }
+    if (!window.confirm(`Delete “${document.title}”? This cannot be undone.`)) {
+      return;
+    }
+    setDeleting(true);
+    try {
+      await onDelete(document.id);
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -248,18 +282,44 @@ function DocumentRow({
           </p>
         </Link>
       )}
-      {editing || document.access !== 'owner' ? null : (
-        <button
-          type="button"
-          onClick={() => {
-            setTitle(document.title);
-            setEditing(true);
-          }}
-          className="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
-        >
-          Rename
-        </button>
+      {editing || !canManage ? null : (
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => {
+              setTitle(document.title);
+              setEditing(true);
+            }}
+            className="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+          >
+            Rename
+          </button>
+          <button
+            type="button"
+            onClick={() => void submitDelete()}
+            disabled={deleting}
+            title="Delete document"
+            aria-label="Delete document"
+            className="flex h-8 w-8 items-center justify-center rounded-md text-zinc-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:hover:bg-red-950/40 dark:hover:text-red-400"
+          >
+            <DeleteIcon />
+          </button>
+        </div>
       )}
     </li>
+  );
+}
+
+function DeleteIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="h-4 w-4">
+      <path
+        d="M5 6.5h10M8 6.5V5h4v1.5M7 6.5v8.5a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V6.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }

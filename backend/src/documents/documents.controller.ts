@@ -122,4 +122,11 @@ export class DocumentsController {
   ) {
     return this.documentsService.appendFromFile(access, file);
   }
+
+  @Delete(':id')
+  @UseGuards(DocumentAccessGuard)
+  @RequireAccess('owner')
+  remove(@CurrentDocumentAccess() access: RequestDocumentAccess) {
+    return this.documentsService.remove(access);
+  }
 }

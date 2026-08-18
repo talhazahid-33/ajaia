@@ -45,6 +45,10 @@ export function updateDocument(
   return apiClient.patch<DocumentDetail>(`/documents/${id}`, data);
 }
 
+export function deleteDocument(id: string) {
+  return apiClient.delete<{ success: boolean }>(`/documents/${id}`);
+}
+
 export const IMPORT_ACCEPT = '.txt,.md,.docx';
 export const IMPORT_EXTENSIONS = ['.txt', '.md', '.docx'] as const;
 export const IMPORT_MAX_BYTES = 5 * 1024 * 1024;
