@@ -1,0 +1,62 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  documents Document[]
+  shares    DocumentShare[]
+
+  @@map("users")
+}
+
+model Document {
+  id        String   @id @default(uuid())
+  title     String
+  content   Json
+  ownerId   String   @map("owner_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  owner  User            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  shares DocumentShare[]
+
+  @@index([ownerId])
+  @@map("documents")
+}
+
+enum DocumentShareRole {
+  EDITOR
+  VIEWER
+
+  @@map("document_share_role")
+}
+
+model DocumentShare {
+  id         String            @id @default(uuid())
+  documentId String            @map("document_id")
+  userId     String            @map("user_id")
+  role       DocumentShareRole @default(VIEWER)
+  createdAt  DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, userId])
+  @@index([userId])
+  @@map("document_shares")
+}
