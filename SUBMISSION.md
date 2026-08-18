@@ -8,7 +8,9 @@ Ajaia is a document editor: rich-text editing, sharing, file import, and real-ti
 
 Walkthrough of login, documents, editing, sharing, import, and presence:
 
-[Watch on Loom](PASTE_LOOM_URL_HERE)
+[Watch on Loom](https://www.loom.com/share/d2547f79f1374cfa8efe178214e2e401)
+
+Password: [12121212]
 
 ## What was built
 
